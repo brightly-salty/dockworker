@@ -645,10 +645,32 @@ impl Docker {
     ///
     /// # API
     /// /containers/{id}/stats
-    pub fn stats(&self, container_id: &str) -> Result<StatsReader> {
+    pub fn stats(
+        &self,
+        container_id: &str,
+        stream: Option<bool>,
+        oneshot: Option<bool>,
+    ) -> Result<StatsReader> {
+        let mut query = url::form_urlencoded::Serializer::new(String::new());
+        query.append_pair(
+            "streasm",
+            if stream.unwrap_or(true) {
+                "true"
+            } else {
+                "false"
+            },
+        );
+        query.append_pair(
+            "one-shot",
+            if oneshot.unwrap_or(false) {
+                "true"
+            } else {
+                "false"
+            },
+        );
         let res = self.http_client().get(
             self.headers(),
-            &format!("/containers/{}/stats", container_id),
+            &format!("/containers/{}/stats?{}", container_id, query.finish()),
         )?;
         Ok(StatsReader::new(res))
     }
